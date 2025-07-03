@@ -1,0 +1,85 @@
+---
+// data imports
+import workExperience from "@/data/Jobs.tsx"
+import education from "@/data/education.ts"
+import languages from "../data/languages.ts"
+import hardSkills from "@/data/hardSkills"
+import softSkills from "@/data/softSkills"
+
+// component imports
+import JobDetails from "./JobDetails.astro";
+import EduDetail from "./EduDetail.astro";
+import SkillCard from "./SkillCard.astro";
+
+// config import
+import {ME} from '@/config';
+
+---
+
+<div class="relative flex flex-col gap-8 text-n700 dark:text-n200 w-full mt-10 px-4">
+
+    {/*Description or About me -- Section*/}
+    <div class="mb-4">
+        <p>
+            {ME.aboutMe}
+        </p>
+        <br/>
+        <p>
+            {ME.aboutMe2}
+        </p>
+    </div>
+    {/*Credentials section*/}
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold mb-4">Credentials</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div class="flex justify-center items-center">
+                <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="1fa9b333-9be3-473b-a5f0-11179a1660ee" data-share-badge-host="https://www.credly.com"></div>
+            </div>
+            <div class="flex justify-center items-center">
+                <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="6035c5e9-6384-41cd-ac1c-30a950708ce6" data-share-badge-host="https://www.credly.com"></div>
+            </div>
+            <div class="flex justify-center items-center">
+                <div data-iframe-width="150" data-iframe-height="270" data-share-badge-id="f94f5e81-a584-48e3-bc61-7b2daa59bf6b" data-share-badge-host="https://www.credly.com"></div>
+            </div>
+            <script type="text/javascript" async src="//cdn.credly.com/assets/utilities/embed.js"></script>
+        </div>
+    </div>
+    {/*Work experience section*/}
+    <div class="mb-4">
+        <h2 class="text-3xl font-bold mb-4">Work Experience</h2>
+        <div class="flex flex-col gap-6">
+            {workExperience.map((job) => (
+                    <JobDetails jobData={job}/>
+            ))}
+        </div>
+    </div>
+    {/*Education section*/}
+    <div class="mb-4">
+        <h2 class="text-3xl font-bold mb-4">Education</h2>
+        <div class="flex flex-col gap-6">
+            {education.map((edu) => (
+                    <EduDetail eduData={edu}/>
+            ))}
+        </div>
+    </div>
+    {/*Skills section*/}
+    <div class="mb-4">
+        <h2 class="text-3xl font-bold mb-4">Hard Skills</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {hardSkills.map((skill) => (
+                    <SkillCard {...skill} showDescription={true}/>
+            ))}
+        </div>
+    </div>
+    {/*Hobbies section*/}
+    <div class="mb-4">
+        <h2 class="text-2xl font-bold mb-4">Soft Skills</h2>
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            {softSkills.map((skill) => (
+                    <SkillCard {...skill} showDescription={false}/>
+            ))}
+        </div>
+    </div>
+    
+    
+</div>
