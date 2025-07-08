@@ -37,11 +37,13 @@ const darkWorkday = CDN_URI + "wd-dub-reversed.svg";
                 class="workday-logo"
             />
             <script>
-                const img = document.getElementById('workdayLogo');
                 const light = 'https://static.workday.com/brand-logos/wd-dub-primary.svg';
                 const dark = 'https://static.workday.com/brand-logos/wd-dub-reversed.svg';
 
                 const setImage = () => {
+                    const img = document.getElementById('workdayLogo') as HTMLImageElement | null;
+                    if (!img) return;
+
                     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                     console.log("Preferrs Dark: "+prefersDark); 
                     console.log("setting src to: "+ (prefersDark ? dark : light)); 
