@@ -31,7 +31,7 @@ const { Content } = await render(post);
                 {tags.join(', ')}
             </p>
         </div>
-        <Image transition:name={`${post.id}-image`} inferSize={true} class="rounded-2xl w-full" src={cover} alt="Main project image"/>
+        <Image transition:name={`${post.id}-image`} class="rounded-2xl w-full" src={cover} alt="Main project image"/>
         <p>
             {summary}
         </p>
