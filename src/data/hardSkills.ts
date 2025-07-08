@@ -17,7 +17,7 @@ const hardSkills: HardSkill[] = [
       "Reporting / RaaS",
       "WQL"
     ],
-    icon: "workday-seeklogo"
+    icon: "workday"
   },
   {
     name: "Microsoft Azure",

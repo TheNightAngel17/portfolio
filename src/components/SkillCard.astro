@@ -20,12 +20,42 @@ const {
 } = Astro.props as SkillCardProps;
 
 const CDN_URI = 'https://static.workday.com/brand-logos/';
+const lightWorkday = CDN_URI + "wd-dub-primary.svg";
+const darkWorkday = CDN_URI + "wd-dub-reversed.svg";
 
 ---
 
 <div class="flex flex-col gap-2 h-skill-icon bg-white dark:bg-n700 p-4 rounded-md">
     <div class="w-10 h-10">
-         <Icon width={40} height={40} name={icon} class="text-primary-light dark:text-primary-dark" />
+        {icon === "workday" ? (
+            <img
+                id="workdayLogo"
+                src={darkWorkday}
+                alt="Workday Logo"
+                width={40}
+                height={40}
+                class="workday-logo"
+            />
+            <script is:client>
+                const img = document.getElementById('workdayLogo');
+                const light = 'https://static.workday.com/brand-logos/wd-dub-primary.svg';
+                const dark = 'https://static.workday.com/brand-logos/wd-dub-reversed.svg';
+
+                const setImage = () => {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    console.log("Preferrs Dark: "+prefersDark); 
+                    console.log("setting src to: "+ (prefersDark ? dark : light)); 
+                    img.src = prefersDark ? dark : light;
+                    img.classList.remove('opacity-0');
+                    img.classList.add('opacity-100');
+                };
+
+                setImage();
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', setImage);
+            </script>
+        ) : (
+            <Icon width={40} height={40} name={icon} class="text-primary-light dark:text-primary-dark" />
+        )}
     </div>
     <h3 class="text-lg font-bold">{name}</h3>
     {
@@ -41,3 +71,4 @@ const CDN_URI = 'https://static.workday.com/brand-logos/';
         )
     }
 </div>
+

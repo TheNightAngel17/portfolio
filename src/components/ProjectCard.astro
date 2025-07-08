@@ -11,7 +11,8 @@ const { title, tags, cover, id } = Astro.props;
                     transition:name={ `${id}-image` }
                     src={cover}
                     alt={"cover preview of " + title}
-                    class={"object-cover w-full h-full rounded-xl"}
+                    class={"object-contain w-full h-full rounded-xl"}
+                    inferSize={true}
                     loading={'eager'}
             />
         </div>

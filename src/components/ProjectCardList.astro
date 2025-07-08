@@ -23,7 +23,8 @@ const { title, tags, cover, id } = Astro.props as Props;
                     transition:name={`${id}-image`}
                     src={cover}
                     alt={`Cover preview of the project titled "${title}"`}
-                    class="object-cover w-full h-full rounded-xl"
+                    class="object-contain w-full h-full rounded-xl"
+                    inferSize={true}
             />
         </div>
         <div class="flex flex-col gap-2 flex-1">
