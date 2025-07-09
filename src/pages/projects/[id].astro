@@ -15,7 +15,7 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-const { title, summary, tags, cover, ogImage, url } = post.data;
+const { title, summary, tags, cover, coverDark, ogImage, url } = post.data;
 
 const { Content } = await render(post);
 
@@ -31,7 +31,8 @@ const { Content } = await render(post);
                 {tags.join(', ')}
             </p>
         </div>
-        <Image transition:name={`${post.id}-image`} class="rounded-2xl w-full" src={cover} alt="Main project image"/>
+        <Image transition:name={`${post.id}-image`} class="rounded-2xl w-full mlx-icon-light" src={cover} alt="Main project image"/>
+        <Image transition:name={`${post.id}-image`} class="rounded-2xl w-full mlx-icon-dark" src={coverDark ?? cover} alt="Main project image Dark"/>
         <p>
             {summary}
         </p>

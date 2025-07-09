@@ -30,6 +30,12 @@ main {
     --tw-prose-hr: theme('colors.n500');
 }
 
+@media (prefers-color-scheme: light) {
+    .mlx-icon-dark {
+        display: none;
+    }
+}
+
 /* Dark mode customization */
 @media (prefers-color-scheme: dark) {
     .prose {
@@ -47,6 +53,10 @@ main {
         --tw-prose-li-marker: theme('colors.n500');
         --tw-prose-img: theme('colors.light-theme');
         --tw-prose-hr: theme('colors.n500');
+    }
+
+    .mlx-icon-light {
+        display: none;
     }
 }
 

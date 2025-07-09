@@ -10,6 +10,7 @@ interface Project {
         summary: string;
         tags: string[];
         cover: ImageMetadata;
+        coverDark?: ImageMetadata;
         startDate: Date;
     };
 }
@@ -35,6 +36,7 @@ const allProjects = (await getCollection('projects'))
                                 title={project.data.title}
                                 tags={project.data.tags}
                                 cover={project.data.cover}
+                                coverDark={project.data.coverDark}
                         />
                 ))
             ) : (

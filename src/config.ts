@@ -19,7 +19,7 @@ export const ME = {
     profileImage:"MLL.jpg",
     profileFacts: [
         {
-            value: 9,
+            value: 8,
             description: "Years Enterprise Dev XP"
         },
         {
@@ -45,6 +45,7 @@ export const SOCIALS = [
         name: "GitHub",
         url: "https://github.com/TheNightAngel17",
         icon: "github-fill",
+        tag: "Personal",
         show: true
     },
     {
@@ -63,12 +64,14 @@ export const SOCIALS = [
         name: "Instagram-Personal",
         url: "https://www.instagram.com/lemonsml17",
         icon: "instagram-fill",
+        tag: "Personal",
         show: true
     },
     {
         name: "Instagram-Astro",
         url: "https://www.instagram.com/thenightangelastro",
         icon: "instagram-fill",
+        tag: "Astro",
         show: true
     },
     {

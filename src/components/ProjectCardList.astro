@@ -10,10 +10,11 @@ interface Props {
     title: string;
     tags: string[];
     cover: ImageMetadata;
+    coverDark?: ImageMetadata;
     id: string;
 }
 
-const { title, tags, cover, id } = Astro.props as Props;
+const { title, tags, cover, coverDark, id } = Astro.props as Props;
 ---
 
 <a href={`/projects/${id}`} class="project-card" aria-label={`View project "${title}"`}>
@@ -23,7 +24,13 @@ const { title, tags, cover, id } = Astro.props as Props;
                     transition:name={`${id}-image`}
                     src={cover}
                     alt={`Cover preview of the project titled "${title}"`}
-                    class="object-contain w-full h-full rounded-xl"
+                    class="object-contain w-full h-full rounded-xl mlx-icon-light"
+            />
+            <Image
+                    transition:name={`${id}-image`}
+                    src={coverDark ?? cover}
+                    alt={`Cover preview of the project titled "${title}"`}
+                    class="object-contain w-full h-full rounded-xl mlx-icon-dark"
             />
         </div>
         <div class="flex flex-col gap-2 flex-1">

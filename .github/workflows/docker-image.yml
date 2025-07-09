@@ -10,9 +10,9 @@ jobs:
 
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
     - uses: actions/checkout@v4
     - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag lemonsml-portfolio:$(date +%s)
+      run: docker build . --file Dockerfile --tag lemonsml-portfolio:${{ github.run_number}}
