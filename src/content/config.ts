@@ -32,7 +32,8 @@ const projects = defineCollection({
         url: z.string(),
         cover: image(),
         tags: z.array(z.string()),
-        ogImage: z.string()
+        ogImage: z.string(),
+        coverDark: image().optional(),
     }),
 });
 

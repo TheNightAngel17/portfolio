@@ -3,6 +3,7 @@ interface HardSkill {
   description?: string;
   bullets?: string[];
   icon: string;
+  iconDark?: string;
 }
 
 const hardSkills: HardSkill[] = [
@@ -17,7 +18,8 @@ const hardSkills: HardSkill[] = [
       "Reporting / RaaS",
       "WQL"
     ],
-    icon: "workday"
+    icon: "wd-dub-primary",
+    iconDark: "wd-dub-reversed"
   },
   {
     name: "Microsoft Azure",
@@ -65,7 +67,7 @@ const hardSkills: HardSkill[] = [
       "React Native",
       "Astro"
     ],
-    icon: "React_Logo"
+    icon: "react"
   }
 ];
 
