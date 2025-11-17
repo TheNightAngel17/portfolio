@@ -1,6 +1,6 @@
 ---
 title: RSM Inbound Contracts Integration
-summary: Solutions for creating projects & contracts inside of Workday from an external tool.
+summary: Architected and led development of an asynchronous integration automating project and contract creation in Workday from external CRM systems. Replaced manual CSV workflows with Azure Service Bus pub/sub architecture supporting opportunity tracking, maintenance-aware processing, and real-time synchronization.
 tags:
     - C#
     - WD Reports
@@ -9,13 +9,27 @@ tags:
 startDate: 2025-08-01
 endDate: 2025-11-31
 author: Mitchell L. Lemons
-url: s
 cover: './images/rsm/rsm.svg'
 ogImage: './images/rsm/rsm.svg'
 ---
 
+---
 ## Table of Contents
 1. [Overview](#overview)
+2. [Role](#role)
+3. [The Problem](#the-problem)
+4. [The Goal](#the-goal)
+5. [The Solution](#the-solution)
+   - [Requirements](#requirements)
+   - [Pub-Sub Approach](#pub-sub-approach)
+   - [Processing of Messages](#processing-of-messages)
+   - [Returning a Response](#returning-a-response)
+   - [Diagram](#diagram)
+6. [Development Management](#development-management)
+7. [Lessons Learned](#lessons-learned)
+   - [What Went Well](#what-went-well)
+   - [What Could Be Improved](#what-could-be-improved)
+   - [Key Takeaways](#key-takeaways)
 
 ---
 
@@ -262,13 +276,65 @@ During my time on this projectec, I was responsible for:
 - Hitting our deliverable deadline
 
 Our timeframe for reaching our delivable was quite tight. 3 Months to architect, develop, test, and deliver a solution of this size was no joke.
-During planning, we had
+We came to an agreed upon soluiton pretty fast, and I was able to be pulled out of my other work to do some pre-work for this integration with the remainder of the time left in that sprint.
+During that time I not only started to scaffold our our Microservice and the orchestrations, but I also was a part of creating and refining ADO stories that went along with all the pieces of work for each segment.
+
+We decided on a structure that focused on a developer doing a large chunk of work on a single sprint, and then QA testing it the sprint after, allowing for less "handoff" time and more focus on getting the proper code down.
+Starting at the end of the integration and working forward seemed quite benifical as when testers finished one part and went to the next part, it was more of a "now we do the same things, but trigger it this way, and all of this other stuff should have happened IN ADDTIION TO what you already have tested"
+This allowd our QA to build upon test plans that they already had completed.
+
+---
+
+## Lessons Learned
+
+### What Went Well
+
+**Reusing Existing Orchestrations**
+The decision to lift and shift the existing orchestrations rather than rebuild from scratch saved us significant development time. 
+While we did need to split them into use-case-specific orchestrations, the core business logic was already tested and proven.
+
+**API-First Approach for Testing**
+By designing our microservice with API endpoints alongside the Service Bus subscriber, we enabled independent testing of the Workday integrations without requiring the other application's involvement.
+This proved invaluable during development and troubleshooting.
+
+**Working Backwards from the Goal**
+Starting development at the end of the integration (the orchestrations) and working backward to the entry point meant that when QA started testing, each subsequent phase built upon what they had already verified. 
+This incremental approach reduced confusion and made test planning more efficient.
+
+**Pub/Sub Architecture Decision**
+The asynchronous pub/sub pattern with Redis-based maintenance awareness proved to be the right architectural choice. 
+It elegantly solved the Workday maintenance window problem while keeping the other application decoupled from Workday's availability.
+
+### What Could Be Improved
+
+**Scope Creep on "Update Opportunity"**
+Initially, we planned to handle all update scenarios through orchestrations.
+We ended up simplifying the "Update Opportunity" operation to only handle date changes via REST API.
+While this worked, having a clearer scope definition earlier would have prevented some rework.
+
+**Earlier Integration Testing**
+While our component-level testing was solid, we could have benefited from earlier end-to-end integration testing with the other application's team.
+Some message contract assumptions had to be adjusted late in the development cycle.
+
+**Documentation During Development**
+With the tight timeline, documentation sometimes took a back seat to development.
+Creating documentation concurrently with development would have made knowledge transfer easier.
+
+### Key Takeaways
+
+**Technical Leadership Is About Enablement**
+Taking point on this project taught me that technical leadership isn't just about making decisions—it's about enabling the team to execute efficiently. 
+Creating clear ADO stories, establishing testable patterns, and removing blockers were as important as the architectural decisions.
+
+**Tight Deadlines Require Smart Tradeoffs**
+With only 3 months to deliver, we had to be ruthless about scope and creative about reusing existing assets. 
+The orchestration lift-and-shift was a perfect example of finding the balance between "perfect" and "done."
+
+**Design for Testability**
+The dual-interface design (Service Bus + API endpoints) made testing dramatically easier. 
+Building testability into the architecture from day one pays dividends throughout the development lifecycle.
+
+**Cross-Team Communication Is Critical**
+Regular sync meetings with the other application's team, even when we didn't think we needed them, prevented misunderstandings about message contracts, timing expectations, and integration behavior.
 
 
-I do think that if we didn't already have the existing Orchestrations from the existing integration, this task likely would have not been completed 
-
-```mermaid
-graph TD;
-    A-->B;
-    B-->C;
-```

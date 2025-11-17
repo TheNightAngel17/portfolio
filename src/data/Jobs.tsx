@@ -109,6 +109,29 @@ const workExperience:WorkExperience[] = [
                 ]
             },
             {
+                projectName: "RSM Inbound Contracts Integration",
+                projectRole: "Technical Lead & Architect",
+                projectLink: "/projects/rsm-wd-inbound-project-creation",
+                description: "Led the technical design and development of an asynchronous integration enabling project and contract creation in Workday from external CRM systems. Replaced a manual CSV-based process with a pub/sub architecture supporting active projects, opportunity tracking, and seamless conversion workflows.",
+                technologies: [
+                    "C#",
+                    "ASP.NET Microservices",
+                    "Azure Service Bus",
+                    "Redis Cache",
+                    "Workday Orchestrate",
+                    "Workday SOAP APIs",
+                    "Workday REST APIs",
+                    "OAuth 2.0"
+                ],
+                responsibilities: [
+                    "Architected pub/sub solution with maintenance-aware message processing",
+                    "Led cross-team technical coordination and requirements gathering",
+                    "Managed development team and sprint planning to meet 3-month deadline",
+                    "Implemented dual-interface design (Service Bus + REST APIs) for testability",
+                    "Lift-and-shifted existing orchestrations into use-case-specific workflows"
+                ]
+            },
+            {
                 projectName: "Near-Real-Time Outbound Integrations",
                 projectRole: "Architect & Support",
                 projectLink: "/projects/rsm-wd-nrt-outbound",
