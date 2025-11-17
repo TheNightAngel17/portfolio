@@ -15,7 +15,7 @@ const hardSkills: HardSkill[] = [
       "Studio",
       "Prism",
       "EIB",
-      "Reporting / RaaS",
+      "Reporting / RaaS (Finance)",
       "WQL"
     ],
     icon: "wd-dub-primary",
