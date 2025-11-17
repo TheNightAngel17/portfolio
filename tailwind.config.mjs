@@ -5,12 +5,13 @@ export default {
 	theme: {
 		container: {
 			center: true,
-			screens: {
-				sm: "100%",
-				md: "100%",
-				lg: "520px",
-				xl: "620px"
-			},
+			// screens: {
+			// 	sm: "100%",
+			// 	md: "100%",
+			// 	lg: "520px",
+			// 	xl: "620px",
+			// 	2xl: "1280px"
+			// },
 			padding: '2rem',
 		},
     	extend: {

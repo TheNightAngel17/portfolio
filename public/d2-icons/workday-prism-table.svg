@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 210 297"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4 (86a8ad7, 2024-10-11)"
+   sodipodi:docname="workday-prism-table.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.71891835"
+     inkscape:cx="396.42889"
+     inkscape:cy="561.25984"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       id="path1"
+       style="display:inline;fill:#000000;stroke-width:2.85914"
+       d="m 12.405761,36.430901 c -5.6578111,0 -10.2136018,4.527383 -10.2136018,10.152191 V 233.11434 c 0,5.62481 4.5557907,10.15216 10.2136018,10.15216 H 198.81417 c 5.6579,0 10.21359,-4.52735 10.21359,-10.15216 V 46.583092 c 0,-5.624808 -4.55569,-10.152191 -10.21359,-10.152191 z M 25.796823,59.611184 H 48.670012 71.543201 V 71.047767 82.484341 H 48.670012 25.796823 V 71.047767 Z m 57.182923,0 h 22.873204 22.87307 V 71.047767 82.484341 H 105.85295 82.979746 V 71.047767 Z m 57.182924,0 h 22.87308 22.8732 v 11.436583 11.436574 h -22.8732 -22.87308 V 71.047767 Z M 25.796823,93.920915 H 48.670012 71.543201 V 105.3575 116.79407 H 48.670012 25.796823 V 105.3575 Z m 57.182923,0 h 22.873204 22.87307 V 105.3575 116.79407 H 105.85295 82.979746 V 105.3575 Z m 57.182924,0 h 22.87308 22.8732 v 11.436585 11.43657 h -22.8732 -22.87308 V 105.3575 Z M 25.796823,128.23064 h 22.873189 22.873189 v 11.43659 11.43658 H 48.670012 25.796823 v -11.43658 z m 57.182923,0 h 22.873204 22.87307 v 11.43659 11.43658 H 105.85295 82.979746 v -11.43658 z m 57.182924,0 h 22.87308 22.8732 v 11.43659 11.43658 h -22.8732 -22.87308 V 139.66723 Z M 25.796823,162.54038 h 22.873189 22.873189 v 11.43658 11.43657 H 48.670012 25.796823 v -11.43657 z m 57.182923,0 h 22.873204 22.87307 v 11.43658 11.43657 H 105.85295 82.979746 v -11.43657 z m 57.182924,0 h 22.87308 22.8732 v 11.43658 11.43657 h -22.8732 -22.87308 V 173.97696 Z M 25.796823,196.8501 h 22.873189 22.873189 v 11.43659 11.43657 H 48.670012 25.796823 v -11.43657 z m 57.182923,0 h 22.873204 22.87307 v 11.43659 11.43657 H 105.85295 82.979746 v -11.43657 z m 57.182924,0 h 22.87308 22.8732 v 11.43659 11.43657 h -22.8732 -22.87308 v -11.43657 z" />
+  </g>
+</svg>

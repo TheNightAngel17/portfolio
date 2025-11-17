@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="23.997404"
+   height="19.197924"
+   class="wd-icon-webpage wd-icon"
+   focusable="false"
+   role="presentation"
+   viewBox="0 0 23.997404 19.197924"
+   version="1.1"
+   id="svg3"
+   sodipodi:docname="Workday-Extend-PMD.svg"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     id="namedview3"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:zoom="32"
+     inkscape:cx="13.96875"
+     inkscape:cy="6.390625"
+     inkscape:window-width="2560"
+     inkscape:window-height="1361"
+     inkscape:window-x="1341"
+     inkscape:window-y="341"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3" />
+  <g
+     fill-rule="evenodd"
+     class="wd-icon-container"
+     id="g3"
+     transform="matrix(1.1998702,0,0,1.1998702,-2.3997404,-4.7994808)">
+    <path
+       fill-rule="nonzero"
+       d="M 4,18 H 20 V 7 H 4 Z M 21.506,4 C 21.779,4 22,4.226 22,4.496 V 19.504 A 0.497,0.497 0 0 1 21.506,20 H 2.494 A 0.498,0.498 0 0 1 2,19.504 V 4.496 C 2,4.222 2.225,4 2.494,4 Z M 6.5,5 a 0.5,0.5 0 1 0 0,1 0.5,0.5 0 0 0 0,-1 z m -2,0 a 0.5,0.5 0 1 0 0,1 0.5,0.5 0 0 0 0,-1 z m 4,0 a 0.5,0.5 0 1 0 0,1 0.5,0.5 0 0 0 0,-1 z"
+       class="wd-icon-fill"
+       id="path2"
+       style="fill:#4b5eb6;fill-opacity:1" />
+    <path
+       d="M 12,13.495 C 12,13.222 12.228,13 12.491,13 h 5.018 A 0.49,0.49 0 0 1 18,13.495 v 2.01 A 0.498,0.498 0 0 1 17.509,16 H 12.491 A 0.49,0.49 0 0 1 12,15.505 Z M 6,9.505 C 6,9.226 6.229,9 6.5,9 h 11 C 17.776,9 18,9.214 18,9.505 v 0.99 A 0.506,0.506 0 0 1 17.5,11 H 6.5 A 0.495,0.495 0 0 1 6,10.495 Z m 0,3.99 A 0.49,0.49 0 0 1 6.49,13 H 9.51 C 9.78,13 10,13.216 10,13.495 v 2.01 A 0.49,0.49 0 0 1 9.51,16 H 6.49 A 0.49,0.49 0 0 1 6,15.505 Z"
+       class="wd-icon-accent"
+       id="path3"
+       style="fill:#4b5eb6;fill-opacity:1" />
+  </g>
+</svg>

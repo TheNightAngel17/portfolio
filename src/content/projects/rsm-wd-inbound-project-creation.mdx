@@ -1,0 +1,274 @@
+---
+title: RSM Inbound Contracts Integration
+summary: Solutions for creating projects & contracts inside of Workday from an external tool.
+tags:
+    - C#
+    - WD Reports
+    - WD SOAP APIs
+    - WD Studio
+startDate: 2025-08-01
+endDate: 2025-11-31
+author: Mitchell L. Lemons
+url: s
+cover: './images/rsm/rsm.svg'
+ogImage: './images/rsm/rsm.svg'
+---
+
+## Table of Contents
+1. [Overview](#overview)
+
+---
+
+
+## Overview
+This inbound integration into Workday allows for the enterprise to create and maintain projects & contracts in the start of their lifecycle.
+It allows not only the creation of active projects and contracts, but also the creation, maintenance, and conversion of opportunity projects and contracts from a CRM system.
+
+---
+
+## Role
+My role on this project was the Lead from our team to solution, design, and manage development of the Worday portions of this integration
+
+---
+
+## The problem
+
+In RSM, when a new opportunity for work arises, the employees in charge of setting up all of the contracts and projects inside of workday need to be able to take information from our CRM and put it into workday.
+The current process that was developed for this need operation was a non-ideal set of integrations that had users handling raw data files and interacting in multiple areas.
+The existing integration had users:
+
+1. Fill out an extensive Excel sheet for the projects / contracts / opportunities that they wanted to see in Workday
+1. Utilize an Excel macro in the sheet that generated a CSV file
+1. Upload the CSV file to Workday via a STUDIO integration, which
+   1. Parsed the file
+   1. Saved the data in custom Extend Business Objects
+1. Wait for the STUDIO integration to complete
+1. Enter an Extend application & view the imported data
+1. Verify data looks correct
+1. Submit the data into Workday
+   
+   
+This would kick off an Orchestration to do all fo the heavly lifting of converting Extend Business Objects into actual native Workday Business Objects.
+
+If the items were for an opportunity and not "active", the users would then also need to:
+
+1. Maintain the submitted data inside of the Extend UI until the S.O.W. was signed
+1. Once the S.O.W. was signed, they would re-submit the extend form which would:
+   1. Update the "opportunity" projects to "active" projects
+   2. Create contract items
+
+The issue with this is that our firm is moving in a different direction with our CRM and our project/contract lifecycle, and we didn't want users to jump back & forth between many different applicaitons, much less be handling raw data files like CSV files.
+We wanted to be able to have a seamless integration with Workday and the new application in order to
+
+---
+
+## The Goal
+
+The hope was that a different team would build out a UI inside of the applicaiton stack that we are moving towards, and users would interact with only that UI.
+In order to accomidate that, there would need to be near-real-time integrations with Workday and that application to ensure that data is synchronized between the applicaitions.
+
+We needed to be able to support 4 main operations:
+
+- The creation of Active Projects / Contracts
+- The creation of Opportunity Projects under an Opporunity ID
+- The management of Opportunity Projects while they are still opportunities
+- The conversion of Opportunity Projects to Active Project and creation of the related Contract
+
+---
+
+## The Solution
+
+
+
+### Requirements
+
+1. Fully Hands-off integration for end users
+1. Asyncronous integration between the other applicaiton an Workday
+1. Keep existing functionality of current integrations
+1. Ease of testability of the Workday side seperate from the other applicaiton
+1. Hard deadline of 3 months, including End to End & User Acceptance Testing
+
+### Pub-Sub approach
+
+We knew that because of Workday's weekly maintenance period where APIs are unavailable, we needed to have an asyncronous integration with workday, as we are a Global firm that may have office hours extending into that maintenance window.
+This is something that we have dealt with before, and the best way to do this is with a Pub/Sub approach.
+We already have a Maitnenance Microservice that publishes out to a Redis Cache statuses & events for when Workday enters into a maintenance window.
+This allows us to create a Service Bus subscriber that will listen to 2 items - Redis for Maintenance events and Azure Service Bus for new Requests.
+We can then pause/resume our subscriber on Maintenance events published by our Maintenance Microservice, allowing us to disable the processing of events form the other applicaiton until workday is available again.
+
+This allows the other applicaiton to not really care if Workday is in a Maintenance window or not, as they can keep pushing messages, and we will process them as we can, and respond in turn with another Pub/Sub topic back to the opther applciaiton.
+
+### Processing of Messages
+
+Lucily for us, the current integration had an Orchestrations in the existing Extend applicaiton that dealt with the inserting/updating/managing of these workday objects from Extend to Workday native business objects.
+The approach we ultimatly landed on was that we would Lift & Shift that Orchestration into seperate Use-case specific orchestrations, and trigger those from our subscriber, depending on what operation was being sent.
+
+This operation was sent on a Service Bus Message property so we could determine the proper deserialization modles for the message, as each operation had slightly different data contracts.
+Once we determined our operation, we could resolve the proper C# registered service, deserialize the message into the proper modle, and invoke the service.
+That service would then in turn launch a specific Integration System that was linked to a specific Orchestration.
+We ended up with 3 different Itnegration Systems / Orchestrations that were Use-case specific, one for each of the operations:
+
+- Create Active
+- Create Opportunity
+- Convert Opportunity
+
+The final operation "Update Opportunity" was stripped down in scope to only be able to update start/end dates of the opporunity projects, so for the time being and to reduce complexity, we kept all of that logic directly in the the Abstraction Layer Microservice.
+In order to updated those dates, we just utilized the REST API for Projects, and made some very simple API calls.
+
+### Returning a Response
+
+As the other applicaiton needed to know whether the operation was a success or a failure, we needed to have a secondary Pub/Sub topic back to that other applciation.
+The question then became how do we know what happened in the orchestrations?
+
+The route we settled upon was to have the Orchestration, at the very end of its processing, make an API call back to our Microservice, which would forward the message to a seperate response topic.
+This involved managing API availability from our Azure environment, as well as ensuring that Workday would be able to connect to our OAuth secured APIs.
+The solution involved creating an External CredStore, generating credentials from inside of Azure, ensuring those credentials had the proper App Roles, and hooking it all together so that our orchestrations can make those calls.
+
+We also needed to add global error handlers in our orchestraitons to make API calls to our APIs if there are issues with the orchestration runs.
+
+### Diagram
+
+```d2 sketch
+
+vars: {
+  d2-config: {
+    layout-engine: tala
+  }
+}
+
+Other Application: {
+  user: {
+    shape: person
+  }
+
+  New UI:{}
+
+  New UI's Service Layer: {}
+
+  user -> New UI: Uses{style.animated: true}
+  New UI -> New UI's Service Layer: Calls{style.animated: true}
+}
+
+Service Bus: {
+  label: "Azure Service Bus"
+  icon: ../../../public/d2-icons/10836-icon-service-Azure-Service-Bus.svg
+  style: {
+    # Set the stroke width to 0 to remove the outline
+    stroke-width: 0 
+  }
+
+  Request Topic: {}
+  
+  Response Topic: {}
+}
+
+Other Application.New UI's Service Layer -> Service Bus.Request Topic: Sends Messages{style.animated: true}
+
+Abstraction Layer: {
+  API-based Testing:{
+    shape: image
+    icon: ../../../public/d2-icons/Postman.png
+  }
+
+  API Management: {
+    shape: image
+    icon: ../../../public/d2-icons/10042-icon-service-API-Management-Services.svg
+  }
+
+  Redis Cache: {
+    shape: image
+    icon: ../../../public/d2-icons/10137-icon-service-Cache-Redis.svg
+  }
+
+  Maintenance Microservice: {
+    icon: ../../../public/d2-icons/02884-icon-service-Worker-Container-App.svg
+    shape: image
+  }
+
+  Maintenance Microservice -> Redis Cache: Publishes Downtime Events\nand Status{style.animated: true}
+  Integration Microservice.Service Bus Subscriber -> Redis Cache: Reads Downtime Events\nand Statuses{style.animated: true}
+
+  Integration Microservice: {
+    icon: ../../../public/d2-icons/02884-icon-service-Worker-Container-App.svg
+
+    API Operation Endpoint:{}
+    API Response Endpoint:{}
+
+    Determines Operation:{
+      shape: diamond
+    }
+
+    Service Bus Subscriber: {
+      label: "Service Bus Subscriber\nHosted Background Service"
+    }
+
+    Operation Svc:{}
+
+    Operation Response Svc:{}
+
+    Service Bus Subscriber -> Determines Operation: {style.animated: true}
+    Determines Operation -> Operation Svc: Resolves & Calls{style.animated: true}
+    API Operation Endpoint -> Operation Svc: Calls{style.animated: true}
+    API Response Endpoint -> Operation Response Svc: Calls{style.animated: true}
+  }
+
+  API Management -> Integration Microservice.API Operation Endpoint: Forwards Requests{style.animated: true}
+  API Management -> Integration Microservice.API Response Endpoint: Forwards Requests{style.animated: true}
+  API-based Testing -> API Management: Tests{style.animated: true}
+}
+
+Workday{
+  icon: ../../../public/d2-icons/Workday.svg
+
+  WD Data Store: {
+    icon: ../../../public/d2-icons/Workday-BusinessObject.svg
+    shape: image
+  }
+
+  Operation Orchestration:{
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Orchestration.svg
+  }
+
+
+  WD APIs: {
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Api.svg
+  }
+
+  Operation Orchestration -> WD APIs: Calls{style.animated: true}
+  WD APIs <-> WD Data Store: Interacts With{style.animated: true}
+
+}
+
+Service Bus.Request Topic -> Abstraction Layer.Integration Microservice.Service Bus Subscriber: Subscribes To Messages{style.animated: true}
+Abstraction Layer.Integration Microservice.Operation Svc -> Workday.Operation Orchestration: Launches{style.animated: true}
+Workday.Operation Orchestration -> Abstraction Layer.API Management: Calls Response Endpoint{style.animated: true}
+Abstraction Layer.Integration Microservice.Operation Response Svc -> Service Bus.Response Topic: Sends Message{style.animated: true}
+Service Bus.Response Topic -> Other Application.New UI's Service Layer: Subscribes To Messages{style.animated: true}
+```
+
+---
+
+## Development Management
+
+With other conflicting priorities for our team going on at the time, it was determined that I would "take point" from our team's standpoint on this specific initiative.
+During my time on this projectec, I was responsible for:
+
+- Attending meetings pertaining to all fascents of this initiative, including requirments gathering, solutioning, planning, developing, testing, and delivering the integration.
+- Architect & design our final path forward
+- Manage development workforce on the project
+- Ensure testing was easy to to complete & automate
+- Hitting our deliverable deadline
+
+Our timeframe for reaching our delivable was quite tight. 3 Months to architect, develop, test, and deliver a solution of this size was no joke.
+During planning, we had
+
+
+I do think that if we didn't already have the existing Orchestrations from the existing integration, this task likely would have not been completed 
+
+```mermaid
+graph TD;
+    A-->B;
+    B-->C;
+```
