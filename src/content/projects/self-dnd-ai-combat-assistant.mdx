@@ -1,0 +1,204 @@
+---
+title: D&D AI Combat Assistant
+summary: An intelligent FoundryVTT module that provides AI-powered combat assistance for NPCs in D&D 5e games. This module uses Large Language Models (LLMs) to generate tactical recommendations based on combat situation analysis and customizable difficulty settings.
+tags:
+    - FoundryVTT
+    - D&D 5e
+    - AI/LLM
+    - TypeScript
+    - JavaScript
+startDate: 2025-09-27
+endDate: 2099-12-31
+author: Mitchell L. Lemons
+url: https://github.com/TheNightAngel17/foundry-vtt-dnd-combat-ai
+cover: './images/mll/logo.svg'
+ogImage: './images/mll/logo.svg'
+---
+
+## Table of Contents
+1. [Overview](#overview)
+2. [Role](#role)
+3. [The Problem](#the-problem)
+4. [The Goal](#the-goal)
+5. [The Solution](#the-solution)
+   - [Combat Analysis Engine](#combat-analysis-engine)
+   - [LLM Integration](#llm-integration)
+   - [Action Recommendation System](#action-recommendation-system)
+   - [Combat Flow Diagram](#combat-flow-diagram)
+6. [Technical Implementation](#technical-implementation)
+7. [Lessons Learned](#lessons-learned)
+   - [What Went Well](#what-went-well)
+   - [What Could Be Improved](#what-could-be-improved)
+   - [Key Takeaways](#key-takeaways)
+
+---
+
+## Overview
+I am a nerd at heart, and I enjoy learning how to do new things by applying them to some hobbies I already have.
+With the AI boom that's been happening, I needed a project to try out my "Vibe Coding" on, ideally with a thing I knew nothing about.
+And that's what this project is about.
+
+A Vibe-First add-on module for FoundryVTT's D&D 5e game system that enables the use of AI to help a Game Master (GM) make better decisions for combat encounters.
+The module analyzes the current combat situation, considers NPC capabilities and tactical positioning, and provides AI-generated recommendations for optimal combat actions.
+
+---
+
+## Role
+This is a personal project where I serve as the sole developer, architect, and designer. 
+I'm learning TypeScript/JavaScript module development for FoundryVTT while exploring practical applications of LLM integration in gaming contexts.
+
+---
+
+## The Problem
+
+Running combat encounters as a GM in D&D can be challenging, especially when managing multiple NPCs with different abilities, spells, and tactical considerations.
+GMs often struggle with:
+
+1. **Cognitive Load** - Tracking multiple NPCs' abilities, positioning, and optimal actions simultaneously
+2. **Suboptimal Tactics** - Not utilizing NPC capabilities to their full potential due to time constraints
+3. **Pacing Issues** - Spending too much time deciding NPC actions slows down combat
+4. **Inconsistent Difficulty** - Without tactical optimization, combat encounters can become too easy or unpredictable
+5. **Forgetting Abilities** - NPCs might have spells or features that get overlooked in the heat of combat
+
+The result is combat that feels less engaging for players and more stressful for GMs.
+
+---
+
+## The Goal
+
+Create a FoundryVTT module that:
+
+1. Analyzes the current combat situation in real-time
+2. Generates intelligent, context-aware tactical recommendations for NPC actions
+3. Considers character sheets, positioning, and combat state
+4. Provides customizable difficulty levels for tactical sophistication
+5. Integrates seamlessly into the existing FoundryVTT combat workflow
+6. Works with any LLM provider (OpenAI, Anthropic, local models, etc.)
+
+The module should feel like having an experienced D&D tactician whispering suggestions without taking control away from the GM.
+
+---
+
+## The Solution
+
+### Combat Analysis Engine
+
+The module hooks into FoundryVTT's combat system to gather comprehensive combat state information:
+
+- **Actor Analysis** - Scans NPC stat blocks for available actions, spells, abilities, and features
+- **Positioning Data** - Evaluates token positions, distances, terrain, and tactical advantages
+- **Combat State** - Tracks HP, conditions, buffs/debuffs, and turn order
+- **Target Assessment** - Analyzes potential targets and their vulnerabilities
+- **Environmental Context** - Considers lighting, cover, and battlefield features
+
+This analysis creates a detailed combat snapshot that provides the LLM with necessary context.
+
+### LLM Integration
+
+The module implements a flexible LLM integration layer:
+
+- **Provider Agnostic** - Supports multiple LLM providers through configurable API endpoints
+- **Prompt Engineering** - Crafts D&D 5e-specific prompts with combat context and difficulty parameters
+- **Response Parsing** - Extracts actionable recommendations from LLM responses
+- **Error Handling** - Gracefully handles API failures with fallback suggestions
+- **Rate Limiting** - Manages API calls to prevent excessive usage
+
+### Action Recommendation System
+
+The core functionality delivers recommendations through:
+
+- **Difficulty Scaling** - Adjustable tactical sophistication from "basic" to "master tactician"
+- **UI Integration** - Displays recommendations in FoundryVTT's interface during combat
+- **Multi-Action Support** - Suggests optimal use of actions, bonus actions, and movement
+- **Spell Selection** - Recommends which spells to use based on available slots and situation
+- **Positioning Advice** - Suggests tactical movement and positioning
+
+### Combat Flow Diagram
+
+```d2 sketch
+shape: sequence_diagram
+
+Game Master
+Encounter Tracker
+Encounter AI Service: Encoutner AI\nService
+LLM
+
+Game Master -> Encounter Tracker: Begins Encounter\nwith LLM
+Encounter Tracker."": Displays Turn\nNotes Area
+Game Master -> Encounter Tracker: Enters events that\nhappened durring turn
+Game Master.a -> Encounter Tracker.a: Moves to next turn
+Encounter AI Service.a -> Encounter Tracker.a: Hooks on\nturn change
+Encounter AI Service.a."": Saves turn Notes\nin ordered list
+Encounter AI Service.a -> Encounter Tracker.a: Returns if next\ncombatatant is a\nplayer character
+Encounter AI Service.a.b."": Generates LLM prompt with\nentire combat's worth of\nturn notes, current combatant\nstatus, and combatant's action list
+Encounter AI Service.a.b -> LLM.a.b: Sends prompt\nto LLM
+LLM.a.b."": Generates action suggestion\nfor current combatant
+LLM.a.b -> Encounter AI Service.a.b: Returns action\nsuggestion
+Encounter AI Service.a.b -> Game Master.a.b: Displays action\nsuggestion in turn notes area
+
+
+```
+
+---
+
+## Technical Implementation
+
+**Technology Stack:**
+- TypeScript/JavaScript for module development
+- FoundryVTT API for game system integration
+- RESTful API integration for LLM providers
+- HTML/CSS for UI components
+
+**Key Technical Challenges:**
+1. **Asynchronous API Calls** - Managing LLM API responses without blocking combat flow
+2. **Context Window Management** - Keeping prompts concise while providing sufficient combat context
+3. **FoundryVTT Module System** - Learning the module development patterns and API hooks
+4. **Response Reliability** - Parsing varied LLM responses into consistent action recommendations
+
+**Development Approach:**
+This project embraces "vibe coding" - learning through doing, iterating based on what feels right, and focusing on practical functionality over perfect architecture.
+
+---
+
+## Lessons Learned
+
+### What Went Well
+
+**Learning Through Application**
+Diving into a completely new technology stack (FoundryVTT modules) while also learning LLM integration created a steep but rewarding learning curve. 
+The hands-on approach accelerated understanding of both systems.
+
+**Modular Design**
+Separating combat analysis, prompt generation, and UI display into distinct components made testing and iteration much easier.
+
+**Real-World Testing**
+Using the module in actual D&D sessions provided invaluable feedback that no amount of theoretical design could match.
+
+### What Could Be Improved
+
+**Initial Architecture**
+Starting with "vibe coding" meant some early architectural decisions needed refactoring as the project matured and requirements became clearer.
+
+**LLM Response Consistency**
+Different LLM providers return responses in varying formats, requiring more robust parsing logic than initially anticipated.
+
+**Performance Optimization**
+Early versions didn't optimize API calls well, sometimes causing slight delays in combat flow.
+
+### Key Takeaways
+
+**AI Integration Isn't Magic**
+Effective LLM integration requires careful prompt engineering, context management, and response handling. 
+The quality of recommendations depends heavily on the quality of the combat context provided.
+
+**User Experience Over Features**
+A simple, reliable recommendation is more valuable than a complex system that occasionally fails or confuses the GM.
+
+**Learning New Tech Through Projects**
+Personal projects with clear use cases are excellent vehicles for learning new technologies. 
+The motivation to solve a real problem drives deeper understanding than tutorial-following.
+
+**Iterative Development Works**
+Starting with basic functionality and iterating based on actual usage resulted in a more practical tool than trying to design everything upfront.
+
+---
