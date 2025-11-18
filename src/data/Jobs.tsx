@@ -153,6 +153,73 @@ const workExperience:WorkExperience[] = [
         currentJob: true,
     },
     {
+        title: "Jack of all trades",
+        startDate: "2021-05-01",
+        company: "Home Lab / Personal Projects",
+        location: "Home",
+        description: "Maintaining and expanding a <b>personal home lab environment</b> to experiment with various technologies and projects. This includes setting up and managing <b>servers</b>, <b>networking equipment</b>, and <b>software applications</b> to enhance <b>technical skills</b> and explore new areas of interest.",
+        projects: [
+            {
+                projectName: "D&D AI Combat Assistant",
+                projectRole: "Solo Developer & Architect",
+                projectLink: "/projects/self-dnd-ai-combat-assistant",
+                description: "An intelligent FoundryVTT module that provides AI-powered combat assistance for NPCs in D&D 5e games. Uses Large Language Models to generate tactical recommendations based on combat situation analysis and customizable difficulty settings.",
+                technologies: [
+                    "TypeScript",
+                    "JavaScript",
+                    "FoundryVTT",
+                    "D&D 5e",
+                    "AI/LLM Integration"
+                ],
+                responsibilities: [
+                    "Developed combat analysis engine for tactical positioning",
+                    "Integrated LLM APIs for AI-powered decision making",
+                    "Built action recommendation system for optimal combat choices",
+                    "Designed and implemented FoundryVTT module architecture"
+                ]
+            },
+            {
+                projectName: "Home Lab Infrastructure",
+                projectRole: "Infrastructure Engineer & Administrator",
+                projectLink: "/projects/self-home-lab",
+                description: "Self-hosted services and networking lab environment for experimenting with various technologies and infrastructure concepts. Continuously expanded to host local services and grow technical knowledge.",
+                technologies: [
+                    "XCPng",
+                    "TrueNAS",
+                    "Ubiquiti Networking",
+                    "Virtualization",
+                    "Network Administration"
+                ],
+                responsibilities: [
+                    "Set up and maintained hypervisor infrastructure",
+                    "Configured network topology and security",
+                    "Deployed and managed self-hosted services",
+                    "Implemented backup and disaster recovery solutions"
+                ]
+            },
+            {
+                projectName: "Portfolio Website",
+                projectRole: "Full-Stack Developer & Designer",
+                projectLink: "/projects/self-portfolio-site",
+                description: "A static website built with Astro for showcasing professional portfolio. Features MDX content management, responsive design, and custom React components for an interactive user experience.",
+                technologies: [
+                    "Astro",
+                    "React",
+                    "TypeScript",
+                    "MDX",
+                    "Tailwind CSS"
+                ],
+                responsibilities: [
+                    "Designed and implemented site architecture using Astro framework",
+                    "Created reusable React components for dynamic content",
+                    "Developed MDX-based content management system",
+                    "Implemented responsive design and user experience features"
+                ]
+            }
+        ],
+        currentJob: true
+    },
+    {
         title: "Programmer / Analyst, Sr.",
         startDate: "2016-08-01",
         endDate: "2022-04-01",
