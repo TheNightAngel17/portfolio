@@ -15,6 +15,21 @@ ogImage: './images/rsm/rsm.svg'
 
 ## Table of Contents
 1. [Overview](#overview)
+2. [The Problem](#the-problem)
+3. [The Goal](#the-goal)
+4. [The Solution](#the-solution)
+   - [Diagram](#diagram)
+   - [Monolithic API Architecture](#monolithic-api-architecture-initial-implementation)
+   - [Microservice Architecture Migration](#microservice-architecture-migration)
+   - [Shared NuGet Package Library](#shared-nuget-package-library)
+   - [SQL Azure Elastic Pool Optimization](#sql-azure-elastic-pool-optimization)
+   - [API Management Gateway & Selective Exposure](#api-management-gateway--selective-exposure)
+   - [File-Based Integration Pipeline](#file-based-integration-pipeline)
+   - [Distributed Maintenance Mode Orchestration](#distributed-maintenance-mode-orchestration)
+5. [Lessons Learned](#lessons-learned)
+   - [What Went Well](#what-went-well)
+   - [What Could Be Improved](#what-could-be-improved)
+   - [Key Takeaways](#key-takeaways)
 
 ---
 
@@ -27,3 +42,401 @@ These included many ASP.NET microservices, MSSQL databases, Azure File Shares, A
 ## More to Come (Portfolio in Development)!!!
 
 ---
+
+## The Problem
+
+With the enterprise moving from other various applications to Workday for alot of the finance portions of the business, there was a need to be able to have an integration layer between the SaaS applicaiton and the rest of the enterprise.
+This would enable rapid development and support of the integrations over time.
+
+---
+
+## The Goal
+
+There were a few main goals with this:
+
+1. Create a centeralized locaiton for enterprise applicaitons to go to to interact with workday
+1. Utilize new / better standards that were being implemented enterprise wide
+1. Have a Data First mindset when building the application set out
+
+---
+
+## The Solution
+
+### Diagram
+
+```d2 sketch
+
+vars: {
+  d2-config: {
+    layout-engine: tala
+  }
+}
+
+
+
+
+Enterprise Terraform: {
+  icon: ../../../public/d2-icons/HashiCorp-Terraform.svg
+
+  Service Bus: {
+    label: "Azure Service Bus"
+    icon: ../../../public/d2-icons/10836-icon-service-Azure-Service-Bus.svg
+    shape: image  
+  } 
+
+  API Management: {
+    shape: image
+    icon: ../../../public/d2-icons/10042-icon-service-API-Management-Services.svg
+  }
+
+  SFTP Site:{
+    shape: image
+    icon: ../../../public/d2-icons/10804-icon-service-FTP.svg
+  }
+
+  Storage Mover: {
+    shape: image
+    icon: ../../../public/d2-icons/03091-icon-service-Azure-Storage-Mover.svg
+  }
+
+  Storage Mover <-> SFTP Site: Transfers Files To/From{style.animated: true}
+
+}
+
+
+Application Terraform: {
+  label: "Abstraction Layer Applicaiton Terraform"
+  icon: ../../../public/d2-icons/HashiCorp-Terraform.svg
+
+
+  DEV Environment Resource Group: {
+    icon: ../../../public/d2-icons/10007-icon-service-Resource-Groups.svg
+    
+    App Registration: {
+      icon: ../../../public/d2-icons/10232-icon-service-App-Registrations.svg
+      shape: image  
+    }
+
+    Managed Identitiy: {
+      icon: ../../../public/d2-icons/10227-icon-service-Entra-Managed-Identities.svg
+      shape: image  
+    }
+
+    File Share:{
+      shape: image
+      icon: ../../../public/d2-icons/10400-icon-service-Azure-Fileshares.svg
+    }
+
+    Azure Functions App:{
+      label: "Azure\nFunctions\ App"
+      icon: ../../../public/d2-icons/10029-icon-service-Function-Apps.svg
+      
+      CRON Functions: {
+        icon: ../../../public/d2-icons/Function-App-Function-CRON.svg
+        shape: image
+      }
+
+    }
+
+
+    App Configuration: {
+      shape: image
+      icon: ../../../public/d2-icons/10219-icon-service-App-Configuration.svg
+    }
+    Key Vault: {
+      shape: image
+      icon: ../../../public/d2-icons/10245-icon-service-Key-Vaults.svg
+    }
+
+    SQL Elastic Pool:{
+      icon: ../../../public/d2-icons/10134-icon-service-SQL-Elastic-Pools.svg
+
+      DB_1:{
+        icon: ../../../public/d2-icons/10130-icon-service-SQL-Database.svg
+        shape: image
+      }
+      
+      DB_2:{
+        icon: ../../../public/d2-icons/10130-icon-service-SQL-Database.svg
+        shape: image
+      }
+    }
+
+    
+    Redis Cache: {
+      shape: image
+      icon: ../../../public/d2-icons/10137-icon-service-Cache-Redis.svg
+    }
+
+    App Configuration -> Key Vault: Reads
+
+    aks:{
+      label: "Azure Kubernetes Service (AKS)"
+      icon: ../../../public/d2-icons/10023-icon-service-Kubernetes-Services.svg
+      
+      
+      INT000 Micro-Svc: {
+        icon: ../../../public/d2-icons/02884-icon-service-Worker-Container-App.svg
+        shape: image
+      }
+      INT001 Micro-Svc: {
+        icon: ../../../public/d2-icons/02884-icon-service-Worker-Container-App.svg
+        shape: image
+      }
+      INT002 Micro-Svc: {
+        icon: ../../../public/d2-icons/02884-icon-service-Worker-Container-App.svg
+        shape: image
+      }
+      Maintenance Micro-Svc: {
+        icon: ../../../public/d2-icons/02884-icon-service-Worker-Container-App.svg
+        shape: image
+      }
+    }  
+    
+    aks.INT000 Micro-Svc <-> SQL Elastic Pool.DB_1: Interacts With{style.animated: true}
+    aks.INT002 Micro-Svc <-> SQL Elastic Pool.DB_2: Interacts With{style.animated: true}
+
+    App Configuration -> aks.INT000 Micro-Svc: Provides Configuration     
+    App Configuration -> aks.INT001 Micro-Svc: Provides Configuration 
+    App Configuration -> aks.INT002 Micro-Svc: Provides Configuration 
+    App Configuration -> aks.Maintenance Micro-Svc: Provides Configuration 
+
+    
+    aks.INT001 Micro-Svc <-> File Share: File Interactions {style.animated: true}
+
+    
+    aks.INT002 Micro-Svc <-> Redis Cache: Interacts With{style.animated: true}
+    aks.INT000 Micro-Svc <-> Redis Cache: Interacts With{style.animated: true}
+    aks.INT001 Micro-Svc <-> Redis Cache: Interacts With{style.animated: true}
+    aks.Maintenance Micro-Svc <-> Redis Cache: Interacts With{style.animated: true}
+
+    Azure Functions App.CRON Functions <-> aks: Interacts with\nvia APIs{style.animated: true}
+  }
+
+
+  QA Environment Resource Group: {
+    label: "QA Environment\nResource Group"
+    icon: ../../../public/d2-icons/10007-icon-service-Resource-Groups.svg
+    shape: image
+  }
+  
+  PRD Environment Resource Group: {
+    label: "PRD Environment\nResource Group"
+    icon: ../../../public/d2-icons/10007-icon-service-Resource-Groups.svg
+    shape: image
+  }
+
+}
+
+Workday{
+  icon: ../../../public/d2-icons/Workday.svg
+
+
+  WD APIs: {
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Api.svg
+  }
+
+  WD Data Store: {
+    icon: ../../../public/d2-icons/Workday-BusinessObject.svg
+    shape: image
+  }
+
+  
+  Extend Data Store(s): {
+    icon: ../../../public/d2-icons/Workday-BusinessObject.svg
+    shape: image
+  }
+
+  Orchestration:{
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Orchestration.svg
+  }
+
+  Studio Applications:{
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Studio.svg
+  }
+
+  Reporting as a Service:{
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Report.svg
+  }
+
+  Extend Application(s):{
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Extend-PMD.svg
+  }
+
+  WD APIs <-> Orchestration: Triggers / Calls{style.animated: true}
+  WD APIs <-> WD Data Store: Reads / Writes {style.animated: true}
+  WD APIs <-> Extend Data Store(s): Reads / Writes {style.animated: true}
+  WD APIs <-> Studio Applications: Reads / Writes {style.animated: true}
+  WD APIs <- Reporting as a Service: Reads {style.animated: true}
+  Reporting as a Service <- WD Data Store: Reads {style.animated: true}
+  Reporting as a Service <- Extend Data Store(s): Reads {style.animated: true}
+  WD APIs <- Extend Application(s): Invokes / Calls {style.animated: true}
+}
+
+Common NuGet Packages:{
+  icon: ../../../public/d2-icons/NuGet.svg
+  shape: image
+}
+
+Application Terraform.DEV Environment Resource Group.aks.INT001 Micro-Svc <-> Common NuGet Packages: Utilizes{style.animated: true}
+
+Common NuGet Packages <-> Workday.WD APIs: Interacts with\nvia APIs{style.animated: true}
+
+Workday.Studio Applications -> Enterprise Terraform.API Management: Calls Exposed APIs{style.animated: true}
+Workday.Orchestration -> Enterprise Terraform.API Management: Calls Exposed APIs{style.animated: true}
+
+Workday.Studio Applications <-> Enterprise Terraform.SFTP Site: Interacts with\nfiles{style.animated: true}
+
+
+Application Terraform.DEV Environment Resource Group.File Share <-> Enterprise Terraform.Storage Mover: Transfers Files To/From{style.animated: true}
+
+Application Terraform.DEV Environment Resource Group.aks.INT001 Micro-Svc -> Enterprise Terraform.Service Bus: Sends/Reads Messages{style.animated: true}
+
+
+```
+
+### Monolithic API Architecture (Initial Implementation)
+
+The initial abstraction layer was implemented as a monolithic ASP.NET Core Web API application, consolidating all integration endpoints, business logic, and Workday interaction patterns within a single deployable unit. This architecture served multiple enterprise applications through a unified RESTful interface, handling authentication, data transformation, and Workday API orchestration.
+
+However, this tightly coupled architecture presented significant challenges: any modification to a single integration endpoint required full application redeployment, introducing regression risks across all integrations. The lack of deployment isolation meant that a bug fix for one integration could inadvertently impact others, creating a bottleneck for rapid iteration and increasing the blast radius of potential failures.
+
+### Microservice Architecture Migration
+
+The architecture was refactored to adopt a domain-driven microservices pattern, with each integration deployed as an isolated, containerized ASP.NET Core service orchestrated through Azure Kubernetes Service (AKS). This decoupling enabled independent deployment pipelines, isolated failure domains, and technology stack flexibility per service.
+
+Each microservice was containerized using Docker and deployed to AKS with Helm charts for configuration management. This architectural shift delivered immediate benefits: development teams could experiment with new patterns and libraries within a single service boundary without impacting production integrations. Deployment velocity increased significantly as changes were scoped to individual services, and horizontal scaling could be tuned per integration based on specific load characteristics rather than scaling the entire monolith.
+
+### Shared NuGet Package Library
+
+With code distributed across multiple repositories, cross-cutting concerns and common integration patterns were abstracted into a suite of private NuGet packages hosted in Azure Artifacts. This library ecosystem standardized Workday interactions and eliminated code duplication across microservices.
+
+Key packages included:
+- **Workday API Client Wrappers**: Leveraging the WorkSharp SDK to provide strongly-typed interfaces for SOAP and REST endpoints, with built-in retry policies and circuit breaker patterns
+- **RaaS (Reporting as a Service) Deserialization Engine**: Automated XML deserialization using XSD schemas provided by Workday, transforming complex hierarchical report data into strongly-typed C# objects
+- **OpenAPI Client Generator Extensions**: Dependency injection helpers for registering auto-generated HTTP clients from OpenAPI specifications, including OAuth 2.0 token management and request/response middleware
+- **Common Middleware & Filters**: Shared authentication, logging, exception handling, and correlation ID propagation components
+
+This approach ensured consistent error handling, logging patterns, and API interaction standards across all microservices while enabling versioned upgrades of shared functionality.
+
+### SQL Azure Elastic Pool Optimization
+
+Initial database architecture deployed separate Azure SQL databases for each integration to maintain regulatory compliance and data isolation boundaries. Performance monitoring revealed low average DTU utilization across databases with sporadic, non-overlapping peak loads—resulting in over-provisioned resources and unnecessary costs.
+
+We consolidated these isolated databases into an Azure SQL Elastic Pool, maintaining logical separation through database-level security while sharing a common pool of compute and storage resources (eDTUs). This architectural change delivered:
+- **Cost Optimization**: ~40% reduction in database costs by eliminating idle capacity and right-sizing shared resources based on aggregate demand
+- **Performance Stability**: Built-in load balancing across databases, with automatic resource allocation during peak periods
+- **Operational Simplification**: Centralized monitoring, backup management, and performance tuning across all integration databases
+
+The elastic pool maintained full database isolation for compliance while enabling dynamic resource sharing—databases experiencing peak load could burst above their minimum allocation, borrowing unused capacity from idle databases.
+
+### API Management Gateway & Selective Exposure
+
+As integration requirements evolved to support external partner systems, selective API exposure became critical. Azure API Management (APIM) was implemented as a centralized gateway layer, providing controlled internet-facing access to specific endpoints while maintaining internal service security.
+
+The APIM layer provided:
+- **Selective Endpoint Exposure**: Policy-based routing to proxy only approved endpoints from internal microservices, preventing unintentional exposure of administrative or internal-only APIs
+- **Backend Abstraction**: Single external API surface decoupled from internal service topology, enabling service refactoring without impacting external consumers
+- **Security & Throttling**: OAuth 2.0 / JWT validation, IP whitelisting, rate limiting, and quota management applied at the gateway level
+- **Developer Portal**: Auto-generated API documentation and sandbox environments for external partner onboarding
+- **Unified Monitoring**: Centralized request logging, analytics, and alerting across all exposed endpoints
+
+This facade pattern protected internal microservices from direct internet exposure while providing enterprise-grade API governance, versioning, and transformation capabilities (e.g., header injection, payload manipulation) without modifying service code.
+
+### File-Based Integration Pipeline
+
+Certain integrations required bulk data transfer that exceeded practical API payload limits. A hybrid storage architecture was implemented to handle large file-based integrations between Workday and Azure infrastructure.
+
+The pipeline architecture consisted of:
+- **SFTP Gateway**: Managed SFTP endpoint with Workday-compatible authentication, serving as the ingress point for Workday Studio file outputs
+- **Azure Storage Mover**: Automated file transfer agent orchestrating secure movement between the DMZ-hosted SFTP site and internal Azure File Shares
+- **SMB 3.0 Azure File Shares**: Cloud-native file storage with SMB protocol support, enabling both programmatic access from C# code (via `System.IO` APIs) and direct mounting to developer workstations
+
+**Developer Experience Benefits**: Azure File Shares supporting SMB 3.0 protocol allowed local mounting as network drives (e.g., `\\storageaccount.file.core.windows.net\share` mapped to `Z:\`), eliminating the need for FTP clients during development and testing. Developers could interact with integration files using native file explorer, VS Code, or command-line tools, dramatically simplifying the debug and staging workflow.
+
+Files were processed asynchronously via Azure Functions triggered by blob storage events or Service Bus messages, enabling parallel processing and retry logic for failed transformations.
+
+### Distributed Maintenance Mode Orchestration
+
+Workday's weekly maintenance windows render all APIs unavailable, requiring a system-wide graceful degradation strategy. A dedicated maintenance orchestration microservice was developed to coordinate state management across the distributed architecture.
+
+**Architecture Components**:
+- **Maintenance Controller Service**: Dedicated microservice exposing control plane APIs for maintenance state transitions
+- **Redis Pub/Sub Channels**: Real-time event broadcasting for maintenance window notifications across all service instances
+- **Redis Distributed Cache**: Shared state store for current maintenance status, queryable by all services
+- **Azure Functions Management API Integration**: Programmatic enable/disable of time-triggered functions via Azure Resource Manager APIs
+
+**State Transition Flow**:
+1. Timer-triggered function or manual API call initiates maintenance mode
+2. Maintenance controller updates Redis state (`maintenance:active = true`)
+3. Redis Pub/Sub message broadcast to all subscribed services/pods
+4. Azure Functions disabled via ARM API to prevent time-based executions
+5. Reverse flow when exiting maintenance window
+
+**Service Implementation Patterns**:
+
+*Long-Running Background Services* (e.g., Service Bus processors):
+- Subscribe to Redis Pub/Sub channel `maintenance:events`
+- On maintenance-start event: Pause message processing via `CancellationTokenSource`, gracefully complete in-flight operations
+- On maintenance-end event: Resume message processing and drain backlog
+
+*Synchronous API Operations* (e.g., REST endpoints):
+- ASP.NET Core middleware inspects Redis state (`maintenance:active`) before routing to controllers
+- Returns HTTP `503 Service Unavailable` with `Retry-After` header during maintenance
+- Custom response includes structured error indicating Workday maintenance window
+- Executes before controller routing, preventing any Workday API interactions from being attempted
+
+This distributed coordination ensured zero failed transactions during maintenance windows while maintaining full observability through centralized state management.
+
+---
+
+## Lessons Learned
+
+### What Went Well
+
+**Microservice Architecture Migration**
+The transition from monolithic to microservices architecture, while challenging, delivered immediate value in deployment velocity and failure isolation. The ability to experiment with new patterns in isolated services without impacting production integrations proved invaluable for rapid iteration.
+
+**SQL Elastic Pool Cost Optimization**
+Consolidating separate Azure SQL databases into an elastic pool delivered substantial cost savings (~40% reduction) while maintaining regulatory compliance through database-level isolation. The dynamic resource sharing model perfectly matched our sporadic, non-overlapping workload patterns.
+
+**Shared NuGet Package Ecosystem**
+Creating a suite of private NuGet packages for common Workday interactions standardized our integration patterns across all microservices. The WorkSharp SDK wrappers with built-in retry policies and circuit breakers significantly improved reliability.
+
+**Redis-Based Maintenance Orchestration**
+The distributed maintenance mode coordination using Redis Pub/Sub effectively solved Workday's weekly maintenance window challenges. The ability to gracefully pause/resume processing across all services prevented failed transactions during downtime.
+
+### What Could Be Improved
+
+**Earlier Investment in Observability**
+Implementing comprehensive observability (structured logging, correlation IDs, distributed tracing) retroactively was exponentially harder than building it in from the start. Cross-service debugging consumed significant time that could have been avoided with earlier investment in monitoring infrastructure.
+
+**NuGet Package Versioning Governance**
+While shared libraries eliminated code duplication, we underestimated the versioning challenges. Services running different package versions created subtle incompatibilities. We should have established semantic versioning standards and automated dependency update pipelines earlier.
+
+**Service Boundaries in Initial Design**
+Starting with a monolithic architecture created significant refactoring debt during the microservices migration. Even for an MVP, designing with proper separation of concerns and service boundaries would have made the evolution far less painful.
+
+**Maintenance Mode Implementation Standardization**
+The Redis Pub/Sub maintenance pattern worked well but required every new service to implement it correctly. Missing implementations led to production incidents. We should have abstracted this into base classes or middleware packages earlier to make correct implementation the default path.
+
+### Key Takeaways
+
+**Observability Must Be Foundational**
+Distributed systems require observability infrastructure from day one. Retrofitting structured logging, distributed tracing, and centralized monitoring is exponentially harder than building it in from the start. Treat observability as a first-class architectural concern, not an afterthought.
+
+**Design for Evolution, Not Just Today**
+Even when building MVPs under tight timelines, invest in proper service boundaries and modular design. A well-structured modular monolith can evolve into microservices with significantly less refactoring debt than a tightly coupled monolith.
+
+**Shared Code Needs Shared Standards**
+Proliferating shared libraries without governance creates coordination overhead. Establish semantic versioning, automated dependency updates, and deprecation policies before distributing common code across teams—version sprawl compounds quickly.
+
+**Make the Right Path the Easy Path**
+Infrastructure patterns like maintenance mode coordination should be abstracted into base classes or middleware packages. When every new service must reimplement critical patterns correctly, production incidents become inevitable. Build framework-level support for cross-cutting concerns.
+
+

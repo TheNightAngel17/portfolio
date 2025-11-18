@@ -10,10 +10,17 @@ import icon from "astro-icon";
 
 import sitemap from "@astrojs/sitemap";
 
+import d2 from "astro-d2";
+
+import mermaid from 'astro-mermaid';
+
 // https://astro.build/config
 export default defineConfig({
     site: 'https://simple-portfolio.vicbox.dev/',
-    integrations: [mdx(), react(), tailwind({
+    integrations: [ d2({output: "d2"}), mermaid({
+      theme: 'forest',
+      autoTheme: true
+    }), mdx(), react(), tailwind({
         applyBaseStyles: false,
     }), icon(), sitemap()],
     markdown: {
@@ -21,7 +28,4 @@ export default defineConfig({
             theme: 'plastic',
             wrap: true,
         },
-    },
-    experimental: {
-        svg: true,
     }});

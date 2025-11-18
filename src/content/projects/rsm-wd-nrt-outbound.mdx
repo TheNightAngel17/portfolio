@@ -1,6 +1,6 @@
 ---
 title: Near-Real-Time Outbound Integrations
-summary: Utilize a varitiety of technologies, accomplishing near-real-time outbound integrations at enterprise scale.
+summary: Designed and implemented a scalable pub/sub integration architecture that delivers Workday project data to multiple enterprise applications in near-real-time, eliminating performance bottlenecks and reducing API overhead.
 tags:
     - WD Orchestrations
     - WD Business Processes
@@ -8,22 +8,223 @@ tags:
 startDate: 2025-01-01
 endDate: 2099-12-31
 author: Mitchell L. Lemons
-url: s
 cover: './images/rsm/Workday/wd-dub-primary.svg'
 coverDark: './images/rsm/Workday/wd-dub-reversed.svg'
 ogImage: './images/rsm/Workday/wd-dub-primary.svg'
 ---
 
-## Table of Contents
-1. [Overview](#overview)
-
 ---
 
+## Table of Contents
+1. [Overview](#overview)
+2. [Role](#role)
+3. [The Problem](#the-problem)
+4. [The Goal](#the-goal)
+5. [The Solution](#the-solution)
+6. [Lessons Learned](#lessons-learned)
+
+---
 
 ## Overview
 A huge issue with enterprise apps is sheer volume, and being able to scale integrations to support near-real-time movement of data on a pub/sub archetecture becomes exponentially hard. 
 However, with the implementation of Orchestrate for Integrations, and a messaging service such as Azure Service Bus, we are able to scale and distribute data to the entire enterprise at near-real-time!
 
-## More to Come (Portfolio in Development)!!!
+---
+
+## Role
+My role on this project was to design a solution that would be able to distribute Poject data from Workday to many different enterprise applicaitons, and build out the Abstraction Layer portion of the applciaiton.
+A 3rd party vendor was already workiang on other items, and was assigned to create the Orchestration and hooking it to the Business Processes.
+
+After the initial deployment, our team took on the entire integration from tip to tail, including the orchestration.
+
 
 ---
+## The problem
+
+There is a business need to be able to retrieve project data from Workday for other enterprise applicaitons to utilize in their applicaitons.
+New applicaitons needed this data from Workday, and were looking to retrieve this dataon a very regular basis to keep in sync between users using their applicaiton and Workday.
+
+---
+
+## The Goal
+
+The hope of this project was to find a way to integrate these applicaitons with Workday.
+Key goal items we had were:
+
+1. Ensure many different applicaitons can utilize the integration without hindering performace
+1. Have a filtering mechanism built in to ensure specified delivery to other applicaitons.
+1. Have the changes be "pushed" form Workday and not "polled"
+1. Ensure the integration scales with our sheer volume of data
+
+---
+
+## The Solution
+
+### Direct API Approach - not an option any more
+While that in itself isn't a terribly hard thing to do, with the sheer volume of projects we have inside of Workday, we couldn't have every applicaiton calling the workday directly.
+We did that once, and then found out that the other application decided "we need to check EVERY SINGLE PROJECT multiple times a day", so they made an API call for every project - multiple times a day.
+This ended up causing many perfomrance issues, so we needed a different way to handle this data.
+
+### Use of Service Bus
+One item that we wanted to make sure about was the ability to have other applicaitons utilize this integration withouth hindering performance of our Workday tenant.
+This means that it woudl be ideal for us to have a SINGLULAR integration that then distributes the data out to the other applicaitons.
+This way, the Workday Tenant only has a single operation done for many appliaitons, vs each applicaiton requiring resources on the tenant to process.
+
+Azure Service was a spectacular use case for this. It allowed us, the owners of the data, to publish data to a single Topic, and other applicaitons can have their own subscriptions.
+We could even make each message a singular project, allowing for each message to have filterable attributes, such as "this message relates to a billable project" or "this message relates to an inactive project".
+Each applicaiton could then set a filter on their subscription, ensuring that they only are notified about projects that they specifically care about.
+
+### Orchestrate for Integrations
+While it has been the case for a while that you could trigger an Integration System form a Business Process inside of Workday, it wasn't always the best idea.
+Certain business process, such as Edit Project, can be triggered an extramly high number of times at Enterprise scale. 
+With STUDIO integrations or even other entegration systems, it woudl start to spin up resources, and eventually, if you didn't have enough resources, it would throttle.
+
+All of that changed with Orchestrate for Integrations. With the etherialness of Orchestrations, we are able to spin up MANY orchestrations at once, and have them do very small and short taks without a noticable delay.
+This mean that we now had a way to do custom code off of high-volume business processes!
+Simply create an orchestration that does what you want it to do, crete an Integration System that points to that orchestration, and attach that Integration System to the business process you want!
+
+For our use case, we were able to put this integration system on many different BPs such as Create Project, Edit Project, and other that we wanted to trigger it off of, allowign us to trigger the orchestration as events happen inside of Workday.
+
+### Hooking it all together
+
+Because of security reasons, RSM's Azure environment is not publically accessable.
+This means that we still needed to find a way for Workday to interact with our Azure resources.
+Thankfully, we were able to make custom API endpoints publically accessable with proper OAuth capabilities, so the solution here was quite easy.
+
+1. Spin up a new Microservice that takes in the Azure Service Bus contract data
+1. Hook that Microservice to the proper Azure Service Bus Topic
+1. Expose the new Microservice endpoint publically, ensuring it's secured properly.
+
+### Diagram
+
+```d2 sketch
+
+vars: {
+  d2-config: {
+    layout-engine: tala
+  }
+}
+
+
+Service Bus: {
+  label: "Azure Service Bus Topic"
+  icon: ../../../public/d2-icons/10836-icon-service-Azure-Service-Bus.svg
+  shape: image  
+}
+
+
+Abstraction Layer: {
+  label: "Abstraction\nLayer"
+  icon: ../../../public/d2-icons/10232-icon-service-App-Registrations.svg
+ 
+
+  API Management: {
+    shape: image
+    icon: ../../../public/d2-icons/10042-icon-service-API-Management-Services.svg
+  }
+
+
+
+  Integration Microservice: {
+    label: "Integration\nMicroservice"
+    icon: ../../../public/d2-icons/02884-icon-service-Worker-Container-App.svg
+
+    API Endpoint:{
+
+    }
+    
+
+    Integration Svc:{
+
+    }
+
+
+    Api Endpoint -> Integration Svc: Resolves & calls {style.animated: true}
+
+  }
+
+  API Management -> Integration Microservice.API Endpoint: Calls {style.animated: true}
+
+}
+Abstraction Layer.Integration Microservice.Integration Svc -> Service Bus: Sends Messages {style.animated: true}
+
+Workday{
+  icon: ../../../public/d2-icons/Workday.svg
+
+  WD Data Store: {
+    icon: ../../../public/d2-icons/Workday-BusinessObject.svg
+    shape: image
+  }
+
+  Orchestration:{
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Orchestration.svg
+  }
+  Business Process:{
+    shape: image
+    icon: ../../../public/d2-icons/Workday-BP.svg
+  }
+
+
+  WD APIs: {
+    shape: image
+    icon: ../../../public/d2-icons/Workday-Api.svg
+  }
+
+  Business Process -> Orchestration: Triggers{style.animated: true}
+  Orchestration <-> WD APIs: Calls{style.animated: true}
+  WD APIs <-> WD Data Store: Reads {style.animated: true}
+
+}
+
+workday.Orchestration -> Abstraction Layer.API Management: Calls {style.animated: true}
+
+Enterprise App 1:{
+  icon: ../../../public/d2-icons/10232-icon-service-App-Registrations.svg
+  shape: image
+}
+
+Enterprise App 2:{
+  icon: ../../../public/d2-icons/10232-icon-service-App-Registrations.svg
+  shape: image
+}
+
+Enterprise App 3:{
+  icon: ../../../public/d2-icons/10232-icon-service-App-Registrations.svg
+  shape: image
+}
+
+Service Bus -> Enterprise App 1: Notifies {style.animated: true}
+Service Bus -> Enterprise App 2: Notifies {style.animated: true}
+Service Bus -> Enterprise App 3: Notifies {style.animated: true}
+```
+
+---
+
+## Lessons Learned
+
+### Scalability Matters from Day One
+Building for scale from the beginning saved us from major refactoring later.
+By choosing a pub/sub architecture with Azure Service Bus, we avoided the performance bottlenecks that plagued our previous point-to-point integration approach.
+
+### Centralized Control is Key
+Having a single point of distribution gave us control over how external applications accessed Workday data. 
+This prevented the chaos of multiple applications making direct calls and overwhelming our tenant with requests.
+
+### Filtering Capabilities are Essential
+Implementing message-level filtering with attributes allowed consuming applications to only receive the data they needed. 
+This reduced noise and processing overhead for all parties involved.
+
+### Orchestrate for Integrations Changed the Game
+The ability to trigger lightweight orchestrations from high-volume business processes opened up entirely new integration patterns. 
+What was previously impractical due to throttling concerns became not only possible but performant.
+
+### Partnership with Vendors Requires Clear Boundaries
+Starting with a 3rd party vendor building portions of the solution taught us the importance of clear ownership boundaries.
+Eventually taking full ownership of the integration allowed us to iterate faster and maintain consistency.
+
+### Event-Driven > Polling
+Moving from a polling model to an event-driven push model dramatically reduced unnecessary API calls and improved data freshness for consuming applications.
+
+---
+

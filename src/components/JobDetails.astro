@@ -5,6 +5,15 @@ import {Badge} from "./ui/badge";
 // library imports
 import {formatDatetime} from "../lib/utils";
 
+interface Project {
+    projectName: string;
+    projectRole?: string;
+    description: string;
+    technologies?: string[];
+    responsibilities?: string[];
+    projectLink?: string;
+}
+
 interface Job {
     title: string;
     company: string;
@@ -14,7 +23,10 @@ interface Job {
     goals: string[];
     currentJob: boolean;
     description: string;
-    keyAccomplishments: string[]
+    technicalSkills?: string[];
+    leadershipSkills?: string[];
+    keyAccomplishments: string[];
+    projects?: Project[];
 }
 
 const {jobData} = Astro.props;  // Ensure correct typing for the props
@@ -27,7 +39,10 @@ const {
     goals,
     currentJob,
     description,
-    keyAccomplishments
+    technicalSkills,
+    leadershipSkills,
+    keyAccomplishments,
+    projects
 } = jobData as Job;
 
 ---
@@ -35,7 +50,7 @@ const {
 <div class="flex flex-col gap-2">
 
     <div class="flex flex-col sm:flex-row justify-between">
-        <h3 class="text-xl font-bold">{company}</h3>
+        <h3 class="text-2xl font-bold">{company}</h3>
         <Badge className="bg-primary-light dark:bg-primary-dark w-fit rounded-md whitespace-nowrap">
             {formatDatetime(startDate)} - {currentJob ? "Present" : formatDatetime(endDate)}
         </Badge>
@@ -50,20 +65,92 @@ const {
     <div set:html={description}></div>
     
     {goals && goals.length > 0 && (
-        <ul class="list-disc list-inside">
-            {goals.map((goal: string) => (
-                    <li>{goal}</li>
-            ))}
-        </ul>
+        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md mt-4">
+            <h4 class="text-xl font-semibold mt-0">Career Goals:</h4>
+            <ul class="list-disc list-inside">
+                {goals.map((goal: string) => (
+                        <li>{goal}</li>
+                ))}
+            </ul>
+        </div>
     )}
+
+    {technicalSkills && technicalSkills.length > 0 && (
+        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md mt-4">
+            <h4 class="text-xl font-semibold mt-0">Technical Skills:</h4>
+            <ul class="list-disc list-inside">
+            {technicalSkills.map((skill: string) => (
+            <li>{skill}</li>
+            ))}
+            </ul>
+        </div>
+    )}
+
+    {leadershipSkills && leadershipSkills.length > 0 && (
+        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md mt-4">
+            <h4 class="text-xl font-semibold mt-0">Leadership & Management:</h4>
+            <ul class="list-disc list-inside">
+            {leadershipSkills.map((skill: string) => (
+            <li>{skill}</li>
+            ))}
+            </ul>
+        </div>
+    )}
+
     {keyAccomplishments && keyAccomplishments.length > 0 && (
         <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md mt-4">
-            <h4 class="text-l font-semibold mt-2 mt-0">Key Accomplishments:</h4>
+            <h4 class="text-xl font-semibold mt-0">Key Accomplishments:</h4>
             <ul class="list-disc list-inside">
             {keyAccomplishments.map((item: string) => (
             <li>{item}</li>
             ))}
             </ul>
+        </div>
+    )}
+
+    {projects && projects.length > 0 && (
+        <div class="bg-gray-100 dark:bg-gray-800 p-3 rounded-md mt-4">
+            <h4 class="text-xl font-semibold mt-0 pb-4">Notable Projects:</h4>
+            <div class="space-y-4">
+            {projects.map((project: Project) => (
+                <div class="border-l-4 border-primary-light dark:border-primary-dark pl-4">
+                    <div class="flex items-center gap-2">
+                        <h5 class="text-l font-bold text-base">{project.projectName}</h5>
+                        {project.projectLink && (
+                            <a href={project.projectLink} class="text-primary-light dark:text-primary-dark hover:underline text-sm">
+                                [View Details →]
+                            </a>
+                        )}
+                    </div>
+                    {project.projectRole && (
+                        <p class="text-sm italic text-gray-600 dark:text-gray-400 ml-0">{project.projectRole}</p>
+                    )}
+                    <div class="pl-4">
+                        <p class="text-sm mt-1">{project.description}</p>
+                        {project.technologies && project.technologies.length > 0 && (
+                            <div class="mt-2">
+                                <span class="text-m font-semibold">Technologies:</span>
+                                <ul class="list-disc list-inside text-sm ml-2">
+                                    {project.technologies.map((tech: string) => (
+                                        <li>{tech}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                        {project.responsibilities && project.responsibilities.length > 0 && (
+                            <div class="mt-2">
+                                <span class="text-m font-semibold">Responsibilities:</span>
+                                <ul class="list-disc list-inside text-sm ml-2">
+                                    {project.responsibilities.map((resp: string) => (
+                                        <li>{resp}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            ))}
+            </div>
         </div>
     )}
 </div>
