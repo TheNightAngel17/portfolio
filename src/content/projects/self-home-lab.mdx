@@ -1,27 +1,383 @@
 ---
 title: Home Lab
-summary: Self-hosted services and networking lab
+summary: A production-grade home lab infrastructure running on XCP-ng with k3s Kubernetes cluster, managed entirely through GitOps using Flux CD. Features automated deployments, persistent storage with Longhorn, ingress routing with Traefik, and sealed secrets management.
 tags:
     - XCPng
+    - k3s
+    - Flux CD
+    - Longhorn
+    - Traefik
     - TrueNas
     - Ubiquiti
+    - GitOps
+    - Kubernetes
+    - SealedSecrets
 startDate: 2021-05-01
 endDate: 2099-12-31
 author: Mitchell L. Lemons
-url: s
+url: https://github.com/TheNightAngel17/Mlx.Home.k3s.Flux
 cover: './images/mll/logo.svg'
 ogImage: './images/mll/logo.svg'
 ---
 
+---
 ## Table of Contents
 1. [Overview](#overview)
+2. [Role](#role)
+3. [The Problem](#the-problem)
+4. [The Goal](#the-goal)
+5. [The Solution](#the-solution)
+   - [Infrastructure Architecture](#infrastructure-architecture)
+   - [GitOps with Flux CD](#gitops-with-flux-cd)
+   - [Storage Strategy](#storage-strategy)
+   - [Ingress & Networking](#ingress--networking)
+   - [Security & Secrets Management](#security--secrets-management)
+6. [Technical Implementation](#technical-implementation)
+   - [Repository Structure](#repository-structure)
+   - [Environment Management](#environment-management)
+   - [Deployment Stages](#deployment-stages)
+7. [Key Features](#key-features)
+8. [Lessons Learned](#lessons-learned)
+   - [What Went Well](#what-went-well)
+   - [What Could Be Improved](#what-could-be-improved)
+   - [Key Takeaways](#key-takeaways)
 
 ---
 
-
 ## Overview
-I needed a place to play with and expand my current knowledge of infrastructure and how things all fit together. Over the years it's grown quite a bit, and now I host plenty of services locally, and continue to use it to grow my technical knowledge.
 
-## More to Come (Portfolio in Development)!!!
+A production-grade home lab infrastructure that evolved from simple experimentation into a comprehensive GitOps-managed Kubernetes platform. The lab runs real services while providing hands-on experience with enterprise cloud-native technologies including k3s, Flux CD, Longhorn storage, Traefik ingress, and sealed secrets management.
+
+---
+
+## Role
+
+As sole architect and operator, I handle infrastructure design, cluster operations, GitOps implementation, application deployment, security management, and disaster recovery procedures across dev and production environments.
+
+---
+
+## The Problem
+
+Manual deployments led to configuration drift between environments, no secure way to version control secrets, lack of disaster recovery procedures, and no safe testing environment. Documentation was scattered and manual processes were difficult to replicate.
+
+---
+
+## The Goal
+
+Build a GitOps-managed Kubernetes platform with automated deployments, secure secrets management, persistent storage with disaster recovery, and multi-environment support (dev/prod) for safe testing—all following enterprise-grade practices.
+
+---
+
+## The Solution
+
+### Diagram
+
+```d2 sketch
+
+vars: {
+  d2-config: {
+    layout-engine: tala
+  }
+}
+
+
+lan: Home Lab LAN {
+
+  k3s: k3s cluster {
+
+    control: Control Plane {
+      shape: rectangle
+      style.multiple: true
+    }
+
+    # Worker Nodes
+    workers: Worker Nodes {
+      shape: rectangle
+      style.multiple: true
+      
+      pods: "Application Pods" {
+        shape: hexagon
+        style.multiple: true
+      }
+      
+      volumes:  {
+        label:""
+        shape: cylinder
+        style.multiple: true
+
+        longhorn: |md
+          ### Longhorn
+          - Replicated
+          - Snapshots
+          - DR Ready
+        |
+      }
+
+
+      ingress: {
+        label:""
+        shape: document
+        style.multiple: true
+
+        traefik: |md
+          ### Traefik Ingress
+          - HTTP/HTTPS
+          - Middlewares
+          - TLS
+        |
+      }
+
+      
+      cloudflared: "Cloudflared" {
+        shape: hexagon
+      }
+
+      flux: "Flux CD Deployment" {
+        shape:hexagon
+      }
+
+      pods <-> volumes: Uses Persistent\nVolumes{style.animated: true}
+      pods <-> ingress: Routes Traffic To\nApplication Pods{style.animated: true}
+      ingress <-> cloudflared: Exposes Ingress\nvia Cloudflare Tunnel{style.animated: true}
+
+    }
+
+    control -> workers: Manages\nWorker Nodes
+    workers.flux -> control: Watches & Syncs\nK8s Manifests{style.animated: true}
+  }
+
+
+  truenas: TureNas Storage {
+    shape: rectangle
+    
+    minio: MinIO S3 {
+      shape: Hexagon
+      
+      longhornBackups: {
+        label:""
+        shape: document
+        style.multiple: true
+
+        buckets: |md
+          ### Backup Buckets
+          - longhorn-backups
+          - snapshots
+        |
+      }
+    }
+    
+    nfs: "NFS Shares" {
+      shape: Hexagon
+    }
+
+    smb: "SMB Shares" {
+      shape: Hexagon
+    }
+
+    datasets: "ZFS Datasets" {
+      shape: cylinder
+      style.multiple: true
+    }
+
+    datasets <-> minio : Stores Backup Buckets{style.animated: true}
+    datasets <-> nfs: Stores Backup Buckets{style.animated: true}
+    datasets <-> smb: Stores Backup Buckets{style.animated: true}
+  }
+}
+
+
+public: Public Internet {
+  cloudflare:  {
+    label:""
+    shape: hexagon
+    style.fill: "#F38020"
+
+    tunnel: |md
+      ### Cloudflare Tunnel
+      - DDoS Protection
+      - SSL/TLS
+      - DNS
+    |
+  }
+
+  internet: Internet {
+    shape: cloud
+  }
+
+  users: Users {
+    shape: person
+    style.multiple: true
+  }
+}
+
+offsite: Offsite Backup {
+
+  replicated: "Replicated Data\n- Disaster Recovery\n- Offsite Backup" {
+    label:""
+    shape: cylinder
+    style.multiple: true
+
+    zfsReplication: |md
+      ### ZFS Replication
+      - Periodic Snapshots
+      - Compressed Transfer
+      - Encrypted
+    |
+  }
+}
+
+github: GitHub {
+  shape: rectangle
+
+  fluxRepo: "Flux CD Repo" {
+    shape: document
+  }
+
+}
+
+lan.k3s.workers.flux -> github.fluxRepo: Bootstraped for changes{style.animated: true}
+lan.truenas.datasets <-> offsite.replicated: Replicates Data\nfor Disaster Recovery{style.animated: true}
+lan.k3s.workers.cloudflared <-> public.cloudflare: Encrypted Tunnel\n(No Open Ports){style.animated: true}
+public.cloudflare <-> public.internet: Secured Access\nto Services{style.animated: true}
+public.internet <-> public.users: HTTP Requests{style.animated: true}  
+lan.k3s.workers.volumes -> lan.truenas.minio.longhornBackups: Backup Volumes\n& Snapshots{style.animated: true}
+lan.k3s.workers.pods -> lan.truenas.nfs: Backup Volumes\n& Snapshots{style.animated: true}
+```
+
+### Infrastructure Architecture
+
+**Architecture Layers:**
+
+- **Physical**: XCP-ng hypervisor, TrueNAS NFS storage, Ubiquiti VLAN-segmented network
+- **Kubernetes**: Separate k3s clusters for dev (testing) and prod (stable services)
+- **Platform**: Flux CD (GitOps), Longhorn (distributed storage), Traefik (ingress), Sealed Secrets (encrypted credentials)
+
+### GitOps with Flux CD
+
+Flux continuously watches the GitHub repository and automatically reconciles cluster state. All infrastructure is declared in YAML manifests stored in Git, enabling disaster recovery through complete cluster reconstruction from the repository.
+
+### Storage & Networking
+
+Longhorn provides distributed persistent volumes with cross-node replication, snapshots, and disaster recovery capabilities. Traefik handles all HTTP/HTTPS traffic with automatic routing, certificate management, and environment-specific hostname patching.
+
+### Security
+
+Sealed Secrets encrypt credentials locally with cluster-specific public keys before storing in Git. The controller automatically decrypts them in-cluster, with separate encryption keys per environment and key rotation support.
+
+---
+
+## Technical Implementation
+
+### Repository Structure
+
+The Flux repository follows a structured hierarchy optimized for multi-environment GitOps:
+
+```
+Mlx.Home.k3s.Flux/
+├── apps/                           # Application definitions
+│   └── <app-name>/
+│       ├── base/                   # Production-ready base manifests
+│       │   ├── kustomization.yaml
+│       │   ├── deployment.yaml
+│       │   ├── service.yaml
+│       │   ├── ingressroute.yaml
+│       │   └── sealedsecret.yaml
+│       └── overlays/
+│           ├── dev/                # Dev-specific patches
+│           │   ├── kustomization.yaml
+│           │   ├── deployment_dev.yaml
+│           │   └── ingressroute_dev.yaml
+│           └── prod/               # Prod-only modifications (rare)
+│
+├── clusters/                       # Cluster entry points
+│   ├── mlx-home-dev/
+│   │   ├── flux-system/           # Auto-generated by Flux bootstrap
+│   │   └── kustomization.yaml     # Points to environment stages
+│   └── mlx-home-prod/
+│       ├── flux-system/
+│       └── kustomization.yaml
+│
+└── environments/                   # Environment-specific configurations
+    ├── dev/
+    │   ├── 00_initialize/         # CRDs, namespaces, foundational resources
+    │   ├── 01_recovery/           # Longhorn, storage recovery manifests
+    │   ├── 02_live/               # Live application deployments
+    │   └── namespaces/
+    └── prod/
+        ├── 00_initialize/
+        ├── 01_recovery/
+        ├── 02_live/
+        └── namespaces/
+```
+
+**Design Principles**: Base manifests represent production truth; dev overlays patch only necessary differences using Kustomize. Three-stage deployments (initialize, recovery, live) ensure controlled bootstrapping.
+
+### Environment Management
+
+**Dev**: Tests changes on feature branches before production. Uses dev-specific hostnames and may have reduced resources. After testing, changes are applied to prod manifests and merged to main.
+
+**Prod**: Stable 24/7 services always tracking `main` branch with production hostnames and resource allocations. Updates only via merged PRs.
+
+### Deployment Stages
+
+1. **Initialize**: CRDs, namespaces, RBAC, foundational controllers
+2. **Recovery**: Longhorn storage system, backup volumes, storage classes
+3. **Live**: Application deployments, services, ingress routes, workloads
+
+Bootstrap sequence: Install Flux → Configure sealed secrets keys → Deploy stages 0-2 sequentially → Restore Longhorn volumes → Verify dashboards → Applications online.
+
+---
+
+## Key Features
+
+- **Automated GitOps**: Push to Git → Flux auto-deploys to cluster with full audit trail
+- **Multi-Environment**: Dev/prod isolation with environment-specific configs and secrets
+- **Persistent Storage**: Longhorn distributed storage with snapshots and disaster recovery
+- **Secure Secrets**: Sealed Secrets encrypt credentials before Git commit, safe for public repos
+- **Ingress Routing**: Traefik centralizes HTTP/HTTPS traffic with automatic routing and dashboards
+- **Kustomize Overlays**: Strategic merge patches eliminate code duplication between environments
+- **PR Workflow**: All changes reviewed with deployment verification checklists and rollback docs
+
+---
+
+## Lessons Learned
+
+### What Went Well
+
+**GitOps Revolutionized Operations**: Complete cluster state in Git enables instant rebuilds, PR-based change reviews, commit-based rollbacks, and full audit history.
+
+**Multi-Environment Testing**: Dev/prod split with feature branch testing caught production-breaking issues early. Rapid iteration in dev provides confidence for production deployments.
+
+**Sealed Secrets**: Solved credential management by enabling safe storage of encrypted secrets in public Git, version-controlled configs, and separate dev/prod secrets without manual coordination.
+
+**Longhorn Disaster Recovery**: Full cluster rebuilds tested successfully multiple times—bootstrap Flux, deploy Longhorn, restore volumes, applications return with all data intact.
+
+**Kustomize Alignment**: Strategic merge patches keep environments aligned. Base = production truth, dev patches only minimal differences (hostnames, resources), making drift obvious.
+
+**Self-Documenting Structure**: Repository patterns serve as documentation, making new service additions straightforward.
+
+### What Could Be Improved
+
+**Monitoring**: Add Prometheus, Grafana, and Loki for cluster health visibility, proactive alerting, and centralized logging.
+
+**Resource Tuning**: Better resource requests/limits to prevent contention and improve capacity planning.
+
+**Automated Testing**: Validate manifests, test ingress routes, and verify sealed secrets before cluster deployment.
+
+**Backup Automation**: Scheduled snapshots, off-cluster storage, and automated verification.
+
+**Network Policies**: Restrict pod-to-pod communication and enforce least privilege for better security.
+
+**Certificate Management**: Implement cert-manager with Let's Encrypt for automated provisioning and renewal.
+
+### Key Takeaways
+
+- **GitOps Investment Pays Off**: Initial setup effort yields massive operational benefits—declarative infrastructure is transformative
+- **Multi-Environment is Essential**: Testing in dev before prod is critical for stability and builds production-grade habits
+- **IaC Enables Disaster Recovery**: Cluster is disposable when everything lives in Git—rebuild in hours from repository
+- **Documentation in Code**: Repository structure, README, and PR templates are living docs that stay current
+- **Incremental Improvement**: Started with manual deployments, evolved to GitOps gradually—avoid overwhelming complexity
+- **Sealed Secrets Work**: Initially skeptical, now production-ready and used in professional environments
+- **Structure Matters**: Clear separation of apps/clusters/environments prevents confusion and errors
 
 ---
